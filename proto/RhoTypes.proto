@@ -5,6 +5,8 @@
  */
 syntax = "proto3";
 
+package coop.rchain.casper.protocol;
+
 // See CapserMessage.proto if this is causing problems
 import "scalapb/scalapb.proto";
 

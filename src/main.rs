@@ -1,4 +1,4 @@
-#![deny(warnings, rust_2018_idioms)]
+#![deny(warnings)]
 
 use futures::Future;
 use hyper::client::connect::{Destination, HttpConnector};
@@ -6,14 +6,14 @@ use tower_grpc::Request;
 use tower_hyper::{client, util};
 use tower_util::MakeService;
 
-pub mod hello_world {
-    include!(concat!(env!("OUT_DIR"), "/helloworld.rs"));
+pub mod casper {
+    include!(concat!(env!("OUT_DIR"), "/coop.rchain.casper.protocol.rs"));
 }
 
 pub fn main() {
     let _ = ::env_logger::init();
 
-    let uri: http::Uri = format!("http://[::1]:50051").parse().unwrap();
+    let uri: http::Uri = format!("http://[::1]:40401").parse().unwrap();
 
     let dst = Destination::try_from_uri(uri.clone()).unwrap();
     let connector = util::Connector::new(HttpConnector::new(4));
@@ -24,7 +24,7 @@ pub fn main() {
         .make_service(dst)
         .map_err(|e| panic!("connect error: {:?}", e))
         .and_then(move |conn| {
-            use crate::hello_world::client::Greeter;
+            use crate::casper::client::DeployService;
 
             let conn = tower_request_modifier::Builder::new()
                 .set_origin(uri)
@@ -32,13 +32,13 @@ pub fn main() {
                 .unwrap();
 
             // Wait until the client is ready...
-            Greeter::new(conn).ready()
+            DeployService::new(conn).ready()
         })
         .and_then(|mut client| {
-            use crate::hello_world::HelloRequest;
+            use crate::casper::BlocksQuery;
 
-            client.say_hello(Request::new(HelloRequest {
-                name: "What is in a name?".to_string(),
+            client.get_blocks(Request::new(BlocksQuery {
+                depth: 1
             }))
         })
         .and_then(|response| {
